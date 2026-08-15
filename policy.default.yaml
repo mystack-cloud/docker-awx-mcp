@@ -1,0 +1,28 @@
+# Restricted MCP HTTP policy (override via AWX_MCP_POLICY_FILE / ConfigMap).
+require_api_key: true
+deny_awx_client_overrides: true
+
+# Read / inspect tools (glob patterns) plus explicit SCM sync.
+allowed_tool_patterns:
+  - env_*
+  - awx_system_info
+  - awx_organizations_*
+  - awx_organization_get
+  - awx_credentials_list
+  - awx_credential_types_list
+  - awx_templates_list
+  - awx_projects_list
+  - awx_inventories_list
+  - awx_inventory_groups_list
+  - awx_inventory_hosts_list
+  - awx_jobs_list
+  - awx_job_get
+  - awx_job_stdout
+  - awx_job_events
+  - awx_job_failure_summary
+
+extra_allowed_tools:
+  - awx_project_update
+
+# Optional hard denylist (applied first).
+denied_tools: []
