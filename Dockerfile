@@ -7,6 +7,8 @@ LABEL org.opencontainers.image.source="https://github.com/mystack-cloud/docker-a
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 ARG AWX_MCP_VERSION=1.2.0
+# awx-mcp-server still uses Server.list_tools (mcp 1.x). mcp 2.x breaks HTTP mode.
+ARG MCP_VERSION_CONSTRAINT='mcp>=1.0.0,<2'
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -26,7 +28,7 @@ RUN apt-get update \
 
 RUN useradd --create-home --uid 1000 --shell /usr/sbin/nologin awxmcp
 
-RUN uv pip install --system "awx-mcp-server==${AWX_MCP_VERSION}" \
+RUN uv pip install --system "awx-mcp-server==${AWX_MCP_VERSION}" "${MCP_VERSION_CONSTRAINT}" \
     && uv cache clean
 
 COPY --chmod=755 entrypoint.sh /usr/local/bin/entrypoint.sh
