@@ -45,7 +45,7 @@ Published to **GHCR**: `ghcr.io/mystack-cloud/docker-awx-mcp`
         "-e", "AWX_USERNAME",
         "-e", "AWX_PASSWORD",
         "-e", "AWX_PLATFORM=awx",
-        "ghcr.io/mystack-cloud/docker-awx-mcp:latest"
+        "ghcr.io/mystack-cloud/docker-awx-mcp:0.1.0"
       ],
       "env": {
         "AWX_BASE_URL": "https://automation-orchestrator-test1.mystack.cloud",
@@ -58,6 +58,8 @@ Published to **GHCR**: `ghcr.io/mystack-cloud/docker-awx-mcp`
 ```
 
 Put `AWX_PASSWORD=…` in the project `.env` (gitignored). Reload MCP after changing config.
+
+> Note: docker-metadata publishes semver tags **without** the leading `v` (`0.1.0`). From the next tagged build, the git tag name (`v0.1.0`) is also pushed.
 
 ## Local build
 
