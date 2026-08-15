@@ -1,6 +1,6 @@
 # docker-awx-mcp
 
-[![Build and Publish](https://github.com/mystack-cloud/docker-awx-mcp/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/mystack-cloud/docker-awx-mcp/actions/workflows/build-and-publish.yml) [![Release](https://img.shields.io/github/v/release/mystack-cloud/docker-awx-mcp)](https://github.com/mystack-cloud/docker-awx-mcp/releases/latest)
+[![Build and Publish](https://github.com/mystack-cloud/docker-awx-mcp/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/mystack-cloud/docker-awx-mcp/actions/workflows/build-and-publish.yml) [![Release](https://img.shields.io/github/v/release/mystack-cloud/docker-awx-mcp?logo=github&label=release&cacheSeconds=3600)](https://github.com/mystack-cloud/docker-awx-mcp/releases/latest)
 
 Docker image wrapping [`awx-mcp-server`](https://github.com/SurgeX-Labs/awx-mcp-server) for inspecting and operating AWX / Ansible Automation Platform from MCP clients (Cursor, Claude, etc.).
 
