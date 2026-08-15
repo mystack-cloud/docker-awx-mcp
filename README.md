@@ -1,6 +1,6 @@
 # docker-awx-mcp
 
-[![Build and Publish](https://github.com/mystack-cloud/docker-awx-mcp/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/mystack-cloud/docker-awx-mcp/actions/workflows/build-and-publish.yml)
+[![Build and Publish](https://github.com/mystack-cloud/docker-awx-mcp/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/mystack-cloud/docker-awx-mcp/actions/workflows/build-and-publish.yml) [![Release](https://img.shields.io/github/v/release/mystack-cloud/docker-awx-mcp)](https://github.com/mystack-cloud/docker-awx-mcp/releases/latest)
 
 Docker image wrapping [`awx-mcp-server`](https://github.com/SurgeX-Labs/awx-mcp-server) for inspecting and operating AWX / Ansible Automation Platform from MCP clients (Cursor, Claude, etc.).
 
@@ -79,7 +79,7 @@ curl -sS http://127.0.0.1:8000/health || true
 
 ## CI
 
-GitHub Actions (`.github/workflows/build-and-publish.yml`) builds multi-arch (`linux/amd64`, `linux/arm64`) and pushes to GHCR on `main` and `v*` tags. PRs build without push.
+GitHub Actions (`.github/workflows/build-and-publish.yml`) builds multi-arch (`linux/amd64`, `linux/arm64`) and pushes to GHCR on `main` and `v*` tags. PRs build without push. Pushing a `v*` tag also creates a [GitHub Release](https://github.com/mystack-cloud/docker-awx-mcp/releases) with generated notes.
 
 Optional repo variable `AWX_MCP_VERSION` pins the PyPI package version (default `1.2.0`).
 
@@ -87,4 +87,4 @@ Optional repo variable `AWX_MCP_VERSION` pins the PyPI package version (default 
 
 - `latest` — default branch
 - `main` — branch builds
-- `vX.Y.Z` — semver tags
+- `vX.Y.Z` / `X.Y.Z` / `X.Y` / `X` — semver tags (also creates a GitHub Release)
