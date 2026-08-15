@@ -1,0 +1,25 @@
+services:
+  awx-mcp:
+    build:
+      context: .
+      args:
+        AWX_MCP_VERSION: ${AWX_MCP_VERSION:-1.2.0}
+    image: docker-awx-mcp:local
+    environment:
+      MODE: ${MODE:-http}
+      AWX_BASE_URL: ${AWX_BASE_URL:-https://automation-orchestrator-test1.mystack.cloud}
+      AWX_USERNAME: ${AWX_USERNAME:-mystack-delivery-agent}
+      AWX_PASSWORD: ${AWX_PASSWORD:-}
+      AWX_TOKEN: ${AWX_TOKEN:-}
+      AWX_PLATFORM: ${AWX_PLATFORM:-awx}
+      AWX_VERIFY_SSL: ${AWX_VERIFY_SSL:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      AWX_MCP_HOST: 0.0.0.0
+      AWX_MCP_PORT: 8000
+    ports:
+      - "${AWX_MCP_PORT:-8000}:8000"
+    # STDIO MCP needs an interactive TTY when run locally without HTTP:
+    #   MODE=stdio docker compose run --rm -T awx-mcp
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
