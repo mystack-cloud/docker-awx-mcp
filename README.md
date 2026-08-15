@@ -1,5 +1,7 @@
 # docker-awx-mcp
 
+[![Build and Publish](https://github.com/mystack-cloud/docker-awx-mcp/actions/workflows/build-and-publish.yml/badge.svg)](https://github.com/mystack-cloud/docker-awx-mcp/actions/workflows/build-and-publish.yml)
+
 Docker image wrapping [`awx-mcp-server`](https://github.com/SurgeX-Labs/awx-mcp-server) for inspecting and operating AWX / Ansible Automation Platform from MCP clients (Cursor, Claude, etc.).
 
 Published to **GHCR**: `ghcr.io/mystack-cloud/docker-awx-mcp`
