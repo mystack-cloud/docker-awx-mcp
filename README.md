@@ -125,12 +125,15 @@ curl -sS -H "X-API-Key: $AWX_MCP_API_KEY" http://127.0.0.1:8000/health
 Policy unit tests (no AWX):
 
 ```bash
-PYTHONPATH=. python -m unittest tests.test_policy -v
+PYTHONPATH=. python -m unittest discover -s tests -v
 ```
 
 ## CI
 
-GitHub Actions (`.github/workflows/build-and-publish.yml`) builds multi-arch (`linux/amd64`, `linux/arm64`) and pushes to GHCR on `main` and `v*` tags. PRs build without push. Pushing a `v*` tag also creates a [GitHub Release](https://github.com/mystack-cloud/docker-awx-mcp/releases) with generated notes.
+- **PR / `main`:** `.github/workflows/build-and-publish.yml` builds multi-arch (`linux/amd64`, `linux/arm64`) and pushes to GHCR on `main` (not on PRs).
+- **Release:** `.github/workflows/release.yml` runs on every `main` push, infers semver from the merged PR title (Conventional Commits), tags `vX.Y.Z`, creates a GitHub Release, and dispatches **Build and Publish** for the new tag.
+
+Bump hints in PR titles: `[major]`, `[minor]`, `[patch]`, or conventional prefixes (`feat:` → minor, `fix:` → patch). Use `[skip release]` to merge without tagging.
 
 Optional repo variable `AWX_MCP_VERSION` pins the PyPI package version (default `1.2.0`).
 
@@ -138,4 +141,4 @@ Optional repo variable `AWX_MCP_VERSION` pins the PyPI package version (default 
 
 - `latest` — default branch
 - `main` — branch builds
-- `vX.Y.Z` / `X.Y.Z` / `X.Y` / `X` — semver tags (also creates a GitHub Release)
+- `vX.Y.Z` / `X.Y.Z` / `X.Y` / `X` — semver tags from automated release (also creates a GitHub Release)

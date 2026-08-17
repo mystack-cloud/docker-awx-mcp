@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
+from restricted.mcp_compat import empty_resources_list_response, sanitize_tools_list_result
 from restricted.policy import McpPolicy, is_awx_override_header, load_policy
 
 
@@ -52,7 +53,7 @@ def _filter_tools_list_result(payload: dict[str, Any], policy: McpPolicy) -> dic
     new_result = dict(result)
     new_result["tools"] = filtered
     new_payload["result"] = new_result
-    return new_payload
+    return sanitize_tools_list_result(new_payload)
 
 
 async def _read_json_body(request: Request) -> tuple[bytes, Optional[dict[str, Any]]]:
@@ -122,6 +123,9 @@ def install_restricted_middleware(app: Any, policy: McpPolicy, static_api_key: O
                         -32601,
                         f"Tool '{tool_name}' is not allowed by MCP policy",
                     )
+
+            if isinstance(message, dict) and message.get("method") == "resources/list":
+                return JSONResponse(content=empty_resources_list_response(message.get("id")))
 
             response = await call_next(request)
 
