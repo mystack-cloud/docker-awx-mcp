@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+  actions: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Resolve source title
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          commit_message="${{ github.event.head_commit.message }}"
+          pr_number="$(printf '%s' "$commit_message" | sed -n 's/.*Merge pull request #\([0-9][0-9]*\).*/\1/p' | head -1)"
+
+          if [ -n "$pr_number" ]; then
+            title="$(gh pr view "$pr_number" --json title --jq .title)"
+            source="PR #${pr_number}"
+          else
+            title="$(printf '%s' "$commit_message" | head -1)"
+            source="direct push"
+          fi
+
+          write_output() {
+            {
+              printf '%s<<EOF\n' "$1"
+              printf '%s\n' "$2"
+              printf 'EOF\n'
+            } >> "$GITHUB_OUTPUT"
+          }
+
+          write_output title "$title"
+          write_output source "$source"
+          echo "Resolved release source ($source): $title"
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          bump="$(node .github/scripts/determine-bump-type.mjs "${{ steps.source.outputs.title }}")"
+          {
+            printf 'type<<EOF\n'
+            printf '%s\n' "$bump"
+            printf 'EOF\n'
+          } >> "$GITHUB_OUTPUT"
+          echo "Version bump: $bump"
+
+      - name: Skip release
+        if: steps.bump.outputs.type == 'skip'
+        run: echo "Release skipped because the title contains [skip release]."
+
+      - name: Create tag and GitHub release
+        if: steps.bump.outputs.type != 'skip'
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          base_tag="$(git tag -l --sort=-v:refname 'v*' | head -1)"
+          if [ -z "$base_tag" ]; then
+            base_version="0.0.0"
+          else
+            base_version="${base_tag#v}"
+          fi
+
+          bump_type="${{ steps.bump.outputs.type }}"
+          candidate_version="$(npx --yes semver@7.7.2 -i "$bump_type" "$base_version")"
+          new_tag="v${candidate_version}"
+          while git rev-parse "$new_tag" >/dev/null 2>&1; do
+            echo "Tag $new_tag already exists, bumping $bump_type again."
+            candidate_version="$(npx --yes semver@7.7.2 -i "$bump_type" "$candidate_version")"
+            new_tag="v${candidate_version}"
+          done
+          echo "Resolved release tag: ${base_tag:-0.0.0} -> ${new_tag} (${bump_type})"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$new_tag" -m "Release $new_tag"
+          git push origin "$new_tag"
+
+          release_notes_file="$(mktemp)"
+          version="${new_tag#v}"
+          cat > "$release_notes_file" <<EOF
+          Automated release from \`${{ github.sha }}\` (${{ steps.source.outputs.source }}).
+
+          **Source title:** ${{ steps.source.outputs.title }}
+          **Version bump:** ${{ steps.bump.outputs.type }} (\`${base_tag:-0.0.0}\` → \`${new_tag}\`)
+
+          ## Container image
+
+          Multi-arch (\`linux/amd64\`, \`linux/arm64\`) image published to GHCR.
+
+          \`\`\`
+          docker pull ghcr.io/${{ github.repository }}:${version}
+          \`\`\`
+
+          For git tag \`${new_tag}\`, GHCR also receives \`${version}\` and additional semver tags (\`X.Y\`, \`X\`).
+          EOF
+          sed -i 's/^          //' "$release_notes_file"
+
+          gh release create "$new_tag" \
+            --title "Release $new_tag" \
+            --notes-file "$release_notes_file"
+
+          {
+            printf 'new_tag<<EOF\n'
+            printf '%s\n' "$new_tag"
+            printf 'EOF\n'
+          } >> "$GITHUB_OUTPUT"
+          echo "Created release $new_tag"
+
+      # Tag pushes from GITHUB_TOKEN do not trigger other workflows, so dispatch explicitly.
+      - name: Trigger Docker build
+        if: steps.bump.outputs.type != 'skip'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run "Build and Publish" --ref "${{ steps.release.outputs.new_tag }}"

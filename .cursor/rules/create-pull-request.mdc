@@ -1,0 +1,125 @@
+---
+description: Create and update GitHub pull requests for the docker-awx-mcp repo (conventional branch, title, ai-review label)
+alwaysApply: false
+---
+
+# Create pull request (docker-awx-mcp)
+
+Run all git/gh commands from the **docker-awx-mcp/** repo root (`mystack-cloud/docker-awx-mcp`).
+
+## Before opening
+
+Run in parallel:
+
+```bash
+git status
+git diff && git diff --staged
+git log -5 --oneline
+git branch -vv
+```
+
+Review all commits that will land on the PR (not only the latest).
+
+## Branch and push
+
+Branch names use the same Conventional Commits **type** as the PR, followed by a hyphen (no slashes):
+
+```
+fix-cursor-mcp-tool-schema
+feat-restricted-policy-tool-filter
+chore-bump-awx-mcp-server
+```
+
+- Use lowercase kebab-case after the type prefix
+- Match the PR type (`feat`, `fix`, `chore`, `docs`, `refactor`, `test`, etc.)
+- Do **not** use `/` in branch names (e.g. not `feat/my-change`)
+
+```bash
+git checkout -b feat-short-description   # if needed
+git push -u origin HEAD
+```
+
+After pushing, check whether a PR already exists for the current branch:
+
+```bash
+gh pr view --json number,url 2>/dev/null
+```
+
+- **PR exists** → update its description (see below); do not create a new PR
+- **No PR** → create one (see below)
+
+## PR title
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) format:
+
+```
+fix: strip null tool fields for Cursor MCP clients
+feat: add restricted HTTP policy middleware
+chore: bump awx-mcp-server to 1.2.0
+```
+
+## Create PR
+
+```bash
+gh pr create --title "feat: short description" --body "$(cat <<'EOF'
+## Summary
+- ...
+
+## Test plan
+- [ ] ...
+
+EOF
+)"
+gh pr edit --add-label "ai-review"
+```
+
+Return the PR URL to the user.
+
+## Update existing PR
+
+When pushing additional commits to a branch that already has a PR, refresh the PR description so it reflects **all** commits on the branch (not only the latest):
+
+```bash
+gh pr edit --body "$(cat <<'EOF'
+## Summary
+- ...
+
+## Test plan
+- [ ] ...
+
+EOF
+)"
+```
+
+Re-read `git log main..HEAD` and the full diff before updating. Keep the summary accurate; add or revise bullets when new changes land.
+
+Return the PR URL to the user.
+
+## Tests
+
+CI runs `.github/workflows/build-and-publish.yml` on PRs and `main`/`v*` tags (multi-arch image build; push on `main` and tags). Merges to `main` also run `.github/workflows/release.yml`, which tags `vX.Y.Z` from the PR title and dispatches the image build.
+
+Locally:
+
+```bash
+PYTHONPATH=. python3 -m unittest discover -s tests -v
+```
+
+Restricted HTTP smoke (optional; needs `.env` with `AWX_MCP_API_KEY` and AWX creds):
+
+```bash
+docker compose up --build -d
+curl -sS -H "X-API-Key: $AWX_MCP_API_KEY" http://127.0.0.1:8000/health
+```
+
+After merge to `main`, the **Release** workflow tags `vX.Y.Z` (from the PR title) and publishes `ghcr.io/mystack-cloud/docker-awx-mcp`. Use `[skip release]` in the PR title to merge without tagging.
+
+When the image changes behaviour deployed on core, bump `k8s_awx_mcp_image_name` in `root-infra` (`plays/paas/core/awx-test1.yml`) in a separate PR after the release image is available.
+
+## Notes
+
+- Repo: `mystack-cloud/docker-awx-mcp` on GitHub
+- Use `gh` for all GitHub operations
+- Do not push or open a PR unless the user asked
+- When the user asks to push changes and a PR already exists, always update the PR description after pushing
+- Canonical remote MCP setup for Cursor: `api/.cursor/rules/awx-mcp.mdc` (user-level `~/.cursor/mcp.json`)
